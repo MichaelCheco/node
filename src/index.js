@@ -2,62 +2,43 @@ import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import uuidv4 from 'uuid/v4';
-let users = {
-	1: {
-		id: '1',
-		username: 'Robin Wieruch',
-	},
-	2: {
-		id: '2',
-		username: 'Dave Davids',
-	},
-};
+import models from './models';
 
-let messages = {
-	1: {
-		id: '1',
-		text: 'Hello World',
-		userId: '1',
-	},
-	2: {
-		id: '2',
-		text: 'By World',
-		userId: '2',
-	},
-};
 const app = express();
 app.use(cors());
 app.use(express.json());
 app.use((req, res, next) => {
-	req.me = users[1];
+	req.context = {
+		models,
+		me: models.users[1],
+	};
 	next();
 });
 
 app.get('/users', (req, res) => {
-	return res.send(Object.values(users));
+	return res.send(Object.values(req.context.models.users));
 });
 app.get('/users/:userId', (req, res) => {
-	const { userId } = req.params;
-	return res.send(users[userId]);
+	return res.send(req.context.models.users[req.params.userId]);
 });
 app.get('/messages', (req, res) => {
-	return res.send(Object.values(messages));
+	return res.send(Object.values(req.context.models.messages));
 });
 
 app.get('/messages/:messageId', (req, res) => {
-	return res.send(messages[req.params.messageId]);
+	return res.send(req.context.models.messages[req.params.messageId]);
 });
 app.get('/session', (req, res) => {
-	return res.send(users[req.me.id]);
+	return res.send(req.context.models.users[req.context.me.id]);
 });
 app.post('/messages', (req, res) => {
 	const id = uuidv4();
 	const message = {
 		text: req.body.text,
 		id,
-		userId: req.me.id,
+		userId: req.context.me.id,
 	};
-	messages[id] = message;
+	req.context.models.messages[id] = message;
 	return res.send(message);
 });
 app.post('/users', (req, res) => {
@@ -69,9 +50,12 @@ app.put('/users/:userId', (req, res) => {
 });
 
 pp.delete('/messages/:messageId', (req, res) => {
-	const { [req.params.messageId]: message, ...otherMessages } = messages;
+	const {
+		[req.params.messageId]: message,
+		...otherMessages
+	} = req.context.models.messages;
 
-	messages = otherMessages;
+	req.context.models.messages = otherMessages;
 
 	return res.send(message);
 });
