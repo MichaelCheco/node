@@ -1,3 +1,19 @@
+import mongoose from 'mongoose';
+
+import User from './user';
+import Message from './message';
+
+const connectDb = () => {
+	return mongoose.connect(process.env.DATABASE_URL);
+};
+
+const models = { User, Message };
+
+export { connectDb };
+
+export default models;
+
+/* PostgreSQL Implementation
 import Sequelize from 'sequelize';
 
 const sequelize = new Sequelize(
@@ -23,3 +39,4 @@ Object.keys(models).forEach(key => {
 export { sequelize };
 
 export default models;
+*/
